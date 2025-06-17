@@ -54,3 +54,14 @@ class QueryRecord(models.Model):
     @classmethod
     def get_queries_by_view(cls, view_name):
         return cls.objects.filter(view_name=view_name).order_by('-duration')
+
+class QueryAnalysis(models.Model):
+    query_record = models.OneToOneField(QueryRecord, on_delete=models.CASCADE, related_name='analysis')
+    analysis = models.JSONField()
+    suggested_optimization = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    applied = models.BooleanField(default=False)
+    applied_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name_plural = "Query Analyses"
