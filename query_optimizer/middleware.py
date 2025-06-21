@@ -1,8 +1,6 @@
-
 from django.conf import settings
 from django.db import connection
 from query_optimizer.models import QueryRecord
-from query_optimizer.utils import is_excluded_path
 import time
 import traceback
 import logging
@@ -13,22 +11,41 @@ logger = logging.getLogger(__name__)
 class QueryCaptureMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        self.watched_models = getattr(settings, 'QUERY_OPTIMIZER_WATCHED_MODELS', [])
-        self.slow_query_threshold = getattr(settings, 'QUERY_OPTIMIZER_SLOW_THRESHOLD', 0.5)  # seconds
+        self.config = getattr(settings, 'QUERY_OPTIMIZER_CONFIG', None)
+        if not self.config:
+            raise ValueError("QUERY_OPTIMIZER_CONFIG is not set in settings.py")
+
+        self.watched_models = self.config.get('watched_models', [])
+        self.excluded_paths = self.config.get('excluded_paths', [])
+        self.slow_query_threshold = self.config.get('slow_query_threshold', 0.5)
+        self.check_config()
+    
+    def check_config(self):
+        if self.watched_models and not isinstance(self.watched_models, list):
+            raise ValueError("watched_models must be a list")
+        
+        if self.excluded_paths and not isinstance(self.excluded_paths, list):
+            raise ValueError("excluded_paths must be a list")
+        
+        if self.slow_query_threshold and not any([isinstance(self.slow_query_threshold, float), isinstance(self.slow_query_threshold, int)]):
+            raise ValueError("slow_query_threshold must be a float or int")
 
     def should_capture(self, request):
         """Determine if we should capture queries for this request"""
         # Skip excluded paths
         path = urlparse(request.path).path
-        if is_excluded_path(path):
+        default_excluded_paths = [
+            '/admin/',
+            '/static/',
+            '/media/'
+        ]
+        excluded_paths = self.excluded_paths.extend(default_excluded_paths)
+        if any(request_path.startswith(excluded) for excluded in excluded_paths):
             return False
             
         # Check if it's an API request
         if hasattr(request, 'accepted_renderer'):
             return True
-            
-        # Additional checks can be added here
-        return True
 
     def get_view_name(self, request):
         """Extract view name from request"""
