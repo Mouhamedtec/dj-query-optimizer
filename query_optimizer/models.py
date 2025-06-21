@@ -65,3 +65,7 @@ class QueryAnalysis(models.Model):
     
     class Meta:
         verbose_name_plural = "Query Analyses"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Analysis for {self.query_record}"
