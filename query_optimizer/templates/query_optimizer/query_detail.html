@@ -1,0 +1,177 @@
+{% extends "query_optimizer/base.html" %}
+
+{% block title %}Analyze Query - Query Optimizer{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    {% if selected_query %}
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                    Query Information
+                </h3>
+                <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="px-4 py-5 sm:p-3">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Execution Time
+                        </dt>
+                        <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ selected_query.formatted_duration }}
+                        </dd>
+                    </div>
+
+                    <div class="px-4 py-5 sm:p-3">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Request Method
+                        </dt>
+                        <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ selected_query.request_method }}
+                        </dd>
+                    </div>
+
+                    <div class="px-4 py-5 sm:p-3">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Content Type
+                        </dt>
+                        <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ selected_query.request_content_type }}
+                        </dd>
+                    </div>
+
+                    <div class="px-4 py-5 sm:p-3">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Response Status Code
+                        </dt>
+                        <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ selected_query.response_status_code }}
+                        </dd>
+                    </div>
+                </dl>
+
+                <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2">
+                    <div class="px-4 py-5 sm:p-3">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            View Name
+                        </dt>
+                        <dd class="mt-1 text-sm font-semibold text-green-600 dark:text-green-400">
+                            {{ selected_query.view_name }}
+                        </dd>
+                    </div>
+
+                    <div class="px-4 py-5 sm:p-3">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Url Path
+                        </dt>
+                        <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ selected_query.url_path }}
+                        </dd>
+                    </div>
+                </dl>
+
+                <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-1">
+                    <div class="px-4 py-5 sm:p-3">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Query Params
+                        </dt>
+                        <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ selected_query.query_params }}
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                    Selected Query
+                </h3>
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <pre class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ selected_query.query }}</pre>
+                </div>
+
+                <form method="post" class="space-y-4" id="analyzeForm" action="{% url 'query_optimizer:query_analyze' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="query_id" value="{{ selected_query.id }}" />
+                    <!-- Progress Bar (hidden by default) -->
+                    <div id="progressContainer" class="hidden">
+                        <div class="relative pt-1">
+                            <div class="flex mb-2 items-center justify-between">
+                                <div>
+                                    <span class="text-xs font-semibold inline-block text-primary-600 dark:text-primary-400" id="progressStatus">
+                                        Analyzing...
+                                    </span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-semibold inline-block text-primary-600 dark:text-primary-400" id="progressPercentage">
+                                        0%
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-primary-200 dark:bg-gray-700">
+                                <div id="progressBar" 
+                                    class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary-500"
+                                    style="width: 0%">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if not selected_query.analysis %}
+                    <!-- Submit Button -->
+                    <div class="flex justify-end">
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            Analyze Query
+                        </button>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% block extra_scripts %}
+    {% if not selected_query.analysis %}
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('analyzeForm');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressStatus = document.getElementById('progressStatus');
+            const progressPercentage = document.getElementById('progressPercentage');
+            const analyzeButton = document.getElementById('analyzeButton');
+
+            form.addEventListener('click', function(e) {
+                // Show progress bar
+                progressContainer.classList.remove('hidden');
+                analyzeButton.disabled = true;
+                
+                // Simulate progress (since we don't have real-time progress)
+                let progress = 0;
+                const interval = setInterval(function() {
+                    if (progress < 90) {
+                        progress += Math.random() * 10;
+                        progressBar.style.width = progress + '%';
+                        progressPercentage.textContent = Math.round(progress) + '%';
+                        
+                        if (progress < 30) {
+                            progressStatus.textContent = 'Analyzing query structure...';
+                        } else if (progress < 60) {
+                            progressStatus.textContent = 'Generating optimization suggestions...';
+                        } else {
+                            progressStatus.textContent = 'Finalizing analysis...';
+                        }
+                    }
+                }, 500);
+
+                // Clean up on page unload
+                window.addEventListener('unload', function() {
+                    clearInterval(interval);
+                });
+            });
+        });
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends "query_optimizer/base.html" %}
+
+{% block title %}Query Analysis Detail - Query Optimizer{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                Query Information
+            </h3>
+            <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="px-4 py-5 sm:p-3">
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Execution Time
+                    </dt>
+                    <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                        {{ analysis.query_record.formatted_duration }}
+                    </dd>
+                </div>
+
+                <div class="px-4 py-5 sm:p-3">
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Request Method
+                    </dt>
+                    <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                        {{ analysis.query_record.request_method }}
+                    </dd>
+                </div>
+
+                <div class="px-4 py-5 sm:p-3">
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Content Type
+                    </dt>
+                    <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                        {{ analysis.query_record.request_content_type }}
+                    </dd>
+                </div>
+
+                <div class="px-4 py-5 sm:p-3">
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Response Status Code
+                    </dt>
+                    <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                        {{ analysis.query_record.response_status_code }}
+                    </dd>
+                </div>
+            </dl>
+
+            <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2">
+                <div class="px-4 py-5 sm:p-3">
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        View Name
+                    </dt>
+                    <dd class="mt-1 text-sm font-semibold text-green-600 dark:text-green-400">
+                        {{ analysis.query_record.view_name }}
+                    </dd>
+                </div>
+
+                <div class="px-4 py-5 sm:p-3">
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Url Path
+                    </dt>
+                    <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                        {{ analysis.query_record.url_path }}
+                    </dd>
+                </div>
+            </dl>
+
+            <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-1">
+                <div class="px-4 py-5 sm:p-3">
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Query Params
+                    </dt>
+                    <dd class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                        {{ analysis.query_record.query_params }}
+                    </dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Original Query -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                Original Query
+            </h3>
+            <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <pre class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ analysis.query_record.query }}</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Results -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                Analysis Results
+            </h3>
+
+            {% if analysis.analysis.analysis %}
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Analysis</h4>
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <pre class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ analysis.analysis.analysis }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if analysis.suggested_optimization %}
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Optimization Suggestions</h4>
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <pre class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ analysis.suggested_optimization }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if analysis.analysis.optimized_query %}
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Optimized Query</h4>
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <pre class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ analysis.analysis.optimized_query }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if analysis.analysis.index_suggestions %}
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Index Suggestions</h4>
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <pre class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ analysis.analysis.index_suggestions }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if analysis.analysis.django_orm_improvements %}
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Django ORM Improvements</h4>
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <pre class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ analysis.analysis.django_orm_improvements }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stack Trace -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                Stack Trace
+            </h3>
+            {% if analysis.query_record.stack_trace %}
+            <div class="mt-6">
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <pre class="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{{ analysis.query_record.stack_trace }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="flex justify-between">
+        <a href="{% url 'query_optimizer:analysis_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            Back to History
+        </a>
+    </div>
+</div>
+{% endblock %} 
