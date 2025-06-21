@@ -1,8 +1,5 @@
 from django.db import connection
-from django.conf import settings
-
 from query_optimizer.models import QueryRecord
-
 from functools import wraps
 import time
 import traceback
@@ -50,7 +47,7 @@ def track_queries(view_func=None, enabled=True, threshold=0.5, capture_stack=Tru
 
             # Start tracking
             start_time = time.time()
-            initial_queries = len(connection.queries)
+            initial_query_count = len(connection.queries)
             
             #Execute the view
             response = func(*args, **kwargs)
@@ -62,7 +59,7 @@ def track_queries(view_func=None, enabled=True, threshold=0.5, capture_stack=Tru
             content_type = request.content_type if hasattr(request, 'content_type') else ''
             
             # Capture queries
-            for query in connection.queries[initial_queries:]:
+            for query in connection.queries[initial_query_count:]:
                 try:
                     duration = float(query['time'])
                     is_slow = duration > threshold
@@ -79,7 +76,7 @@ def track_queries(view_func=None, enabled=True, threshold=0.5, capture_stack=Tru
                         request_content_type=content_type,
                         response_status_code=status_code,
                     )
-                    
+
                     if is_slow:
                         logger.warning(
                             f"Slow query ({duration:.3f}s) in {view_name} - "
@@ -91,11 +88,19 @@ def track_queries(view_func=None, enabled=True, threshold=0.5, capture_stack=Tru
                     logger.error(f"Failed to capture query: {str(e)}", exc_info=True)
                     continue
 
+            # Log request summary
+            total_time = time.time() - start_time
+            query_count = len(connection.queries) - initial_query_count
+            logger.debug(
+                f"Request {request.method} {request.path} - "
+                f"{query_count} queries in {total_time:.3f}s"
+            )
+
             return response
 
         return wrapped
 
-    # Handle both @track_queries and @track_queries(threshold=0.7) cases
+    # Handle both @track_queries and @track_queries(threshold=0.5) cases
     if view_func:
         return decorator(view_func)
     return decorator
