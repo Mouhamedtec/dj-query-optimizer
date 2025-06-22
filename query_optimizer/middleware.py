@@ -1,3 +1,4 @@
+
 from django.conf import settings
 from django.db import connection
 from query_optimizer.models import QueryRecord
@@ -16,7 +17,7 @@ class QueryCaptureMiddleware:
             raise ValueError("QUERY_OPTIMIZER_CONFIG is not set in settings.py")
 
         self.watched_models = self.config.get('watched_models', [])
-        self.excluded_paths = self.config.get('excluded_paths', [])
+        self.excluded_paths = self.config.get('excluded_paths', []) + ['/admin/', '/static/', '/media/']
         self.slow_query_threshold = self.config.get('slow_query_threshold', 0.5)
         self.check_config()
     
@@ -34,18 +35,11 @@ class QueryCaptureMiddleware:
         """Determine if we should capture queries for this request"""
         # Skip excluded paths
         path = urlparse(request.path).path
-        default_excluded_paths = [
-            '/admin/',
-            '/static/',
-            '/media/'
-        ]
-        excluded_paths = self.excluded_paths.extend(default_excluded_paths)
-        if any(request_path.startswith(excluded) for excluded in excluded_paths):
-            return False
+        return not any(path.startswith(excluded) for excluded in self.excluded_paths)
             
         # Check if it's an API request
-        if hasattr(request, 'accepted_renderer'):
-            return True
+        # if hasattr(request, 'accepted_renderer'):
+        #     return True
 
     def get_view_name(self, request):
         """Extract view name from request"""
