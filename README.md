@@ -1,3 +1,5 @@
+[![Published on Django Packages](https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26)](https://djangopackages.org/packages/p/dj-query-optimizer/)
+
 # Query Optimizer AI
 
 A Django application that automatically captures, analyzes, and optimizes SQL queries using AI-powered suggestions. This tool helps developers identify slow queries and provides intelligent optimization recommendations.
